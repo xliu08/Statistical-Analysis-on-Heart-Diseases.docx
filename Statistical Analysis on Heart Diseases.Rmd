@@ -1,0 +1,446 @@
+---
+title: "Xiaoting(Theresa) Liu - Final Project"
+output:
+  html_document:
+    df_print: paged
+---
+
+#Improting libraries:
+```{r}
+library(plyr)
+library(MASS)
+# data re-shaping
+library(tidyr) 
+# data re-shaping
+library(dplyr)  
+```
+
+```{r}
+library(ggplot2)    
+library(knitr)
+library(broom)
+library(reshape2)
+```
+
+```{r}
+# pipe operator
+library(magrittr)   
+```
+
+#Descritive Analysis 
+```{r}
+#Import dataset
+heartdiseases <- read.csv ("~/Desktop/Course Data/heart.csv",header=T)
+head(heartdiseases)
+```
+
+```{r}
+#Clean the dataset and summarize the dataset 
+heartdiseases <- heartdiseases %>% drop_na() #drops rows with null values 
+summary(is.na(heartdiseases))
+```
+The dataset is pretty well organized. There is no null data. 
+
+
+```{r}
+#View the variables and the type of the data
+str(heartdiseases)
+```
+
+It is better to change the column names and value of the categorical variable for better interpretation later. 
+```{r}
+#change the column names
+name <- c('age', 'sex','chest_pain_type', 'resting_blood_pressure', 'cholesterol', 'fasting_blood_sugar', 'rest_ecg', 'max_heart_rate_achieved','exercise_induced_angina', 'st_depression', 'st_slope', 'num_major_vessels', 'thalassemia', 'target')
+names(heartdiseases) <- name
+```
+
+
+```{r}
+#changes the value
+heartdiseases$sex[heartdiseases$sex == "1"] = "male"
+heartdiseases$sex[heartdiseases$sex == "0"] = "female"
+heartdiseases$chest_pain_type[heartdiseases$chest_pain_type == "0"] = "typical angina"
+heartdiseases$chest_pain_type[heartdiseases$chest_pain_type == "1"] = "atypical angina"
+heartdiseases$chest_pain_type[heartdiseases$chest_pain_type == "2"] = "non-anginal pain"
+heartdiseases$chest_pain_type[heartdiseases$chest_pain_type == "3"] = "asymptomatic"
+heartdiseases$fasting_blood_sugar[heartdiseases$fasting_blood_sugar == "0"] = "<=120"
+heartdiseases$fasting_blood_sugar[heartdiseases$fasting_blood_sugar == "1"] = ">120"
+heartdiseases$rest_ecg[heartdiseases$rest_ecg == "0" ] = "Normal"
+heartdiseases$rest_ecg[heartdiseases$rest_ecg == "1" ] = "Abnormality"
+heartdiseases$rest_ecg[heartdiseases$rest_ecg == "2" ] = "Probable or Definite"
+heartdiseases$exercise_induced_angina[heartdiseases$exercise_induced_angina == "0"] = "no"
+heartdiseases$exercise_induced_angina[heartdiseases$exercise_induced_angina == "1"] = "yes"
+heartdiseases$st_slope[heartdiseases$st_slope == "0"] = "upsloping"
+heartdiseases$st_slope[heartdiseases$st_slope == "1"] = "flat"
+heartdiseases$st_slope[heartdiseases$st_slope == "2"] = "downsloping"
+heartdiseases$thalassemia[heartdiseases$thalassemia == "1"] = "normal"
+heartdiseases$thalassemia[heartdiseases$thalassemia == "2"] = "fixed defect"
+heartdiseases$thalassemia[heartdiseases$thalassemia == "3"] = "reversible defect"
+heartdiseases$target[heartdiseases$target == "0"] = "no"
+heartdiseases$target[heartdiseases$target == "1"] = "yes"
+```
+
+```{r}
+str(heartdiseases)
+```
+
+
+```{r}
+#Summarize the data
+summary(heartdiseases)
+```
+
+
+#Simple Visualization for each Variable
+Age Analysis 
+```{r}
+library(ggplot2)
+library(ggpubr)
+```
+
+```{r}
+ggplot(data = heartdiseases, aes(heartdiseases$age)) + 
+  geom_histogram(aes(y = ..density..),
+                 breaks=seq(20, 85, by = 2),
+                 col = "black",
+                 fill = "blue",
+                 alpha=.2) +
+  geom_density(col= "black") + 
+  labs(title = "Histogram for Age", x = "Age", y = "Density")
+```
+
+```{r}
+ggplot(heartdiseases, aes(age, fill = target)) +
+        geom_density(alpha = 0.2) + 
+        xlim (20, 85) +
+        labs(title = "Heart Disease Frequency for Age", x = "Age", y = "Density")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+  
+```
+
+Most of the distribution of this dataset fall into between age 40 to age 70 (middle ages and elderly age range) 
+
+Sex Analysis 
+```{r}
+hdsex = table(heartdiseases$sex, heartdiseases$target)
+hdsex
+```
+
+```{r}
+ggplot(heartdiseases, aes(sex)) +
+  geom_bar(aes(fill=target)) + 
+  labs(title = "Heart Disease Frequency for Sex", x = "Sex", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+```{r}
+table(heartdiseases$sex, heartdiseases$target)
+```
+
+Resting Blood Pressure
+```{r}
+ggplot(data = heartdiseases, aes(heartdiseases$resting_blood_pressure)) + 
+  geom_histogram(aes(y = ..density..),
+                 breaks=seq(80, 200, by = 2),
+                 col = "black",
+                 fill = "blue",
+                 alpha=.2) +
+  geom_density(col= "black") + 
+  labs(title = "Histogram for Resting Blood Pressure", x = "Resting Blood Pressure", y = "Density")
+```
+
+
+Chest Pain Type
+```{r}
+hdcp = table(heartdiseases$chest_pain_type, heartdiseases$target)
+hdcp
+```
+
+```{r}
+#visualize the table
+ggplot(heartdiseases, aes(chest_pain_type)) +
+  geom_bar(aes(fill=target)) + 
+  labs(title = "Heart Disease Frequency for Chest Pain Type", x = "Type", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+
+Cholesterol Analysis 
+```{r}
+ggplot(heartdiseases, aes(cholesterol, fill = target)) +
+        geom_density(alpha = 0.2) + 
+        xlim (100, 600) +
+        labs(title = "Heart Disease Frequency for Cholesterol", x = "Cholesterol", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+
+Fasting Blood Sugar Anslysis 
+```{r}
+#visualize the table
+ggplot(heartdiseases, aes(fasting_blood_sugar)) +
+  geom_bar(aes(fill=target)) + 
+  labs(title = "Heart Disease Frequency for Fasting Blood Sugar", x = "Fasting Blood Sugar", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+
+Resting Electrocardiographic Measurement Analysis 
+```{r}
+ggplot(heartdiseases, aes(rest_ecg)) +
+  geom_bar(aes(fill=target)) + 
+  labs(title = "Heart Disease Frequency for Resting Electrocardiographic Measurement Analysis", x = "Resting Electrocardiographic Measurement Analysis ", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+
+Maximum Heart Rate Achieved Analysis 
+```{r}
+ggplot(data = heartdiseases, aes(heartdiseases$max_heart_rate_achieved)) + 
+  geom_histogram(aes(y = ..density..),
+                 breaks=seq(50, 220, by = 2),
+                 col = "black",
+                 fill = "blue",
+                 alpha=.2) +
+  geom_density(col= "black") + 
+  labs(title = "Histogram for Maximum Heart Rate Achieved", x = "Maximum Heart Rate Achieved", y = "Count")
+```
+
+St_Depression 
+```{r}
+ggplot(heartdiseases, aes(st_depression)) +
+  geom_bar(aes(fill=target)) + 
+  labs(title = "Heart Disease Frequency for St_Depression ", x = "St_Depression", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+
+The Number of Major Vessels 
+```{r}
+ggplot(heartdiseases, aes(num_major_vessels)) +
+  geom_bar(aes(fill=target)) + 
+  labs(title = "Heart Disease Frequency for The Number of Major Vessels", x = "The Number of Major Vessels", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+
+Thalassemia 
+```{r}
+ggplot(heartdiseases, aes(thalassemia)) +
+  geom_bar(aes(fill=target)) + 
+  labs(title = "Heart Disease Frequency for Thalassemia", x = "Thalassemia", y = "Count")+
+        scale_fill_discrete(labels = c("No Disease", "Heart Disease"))
+```
+
+#Correlation Test 
+```{r}
+#subset the numerical variables 
+heartdiseases1 = subset(heartdiseases, select = c(age, resting_blood_pressure, cholesterol, max_heart_rate_achieved, st_depression, num_major_vessels))
+head(heartdiseases1)
+```
+
+```{r}
+#create heat map to narrow down the significant correlation between variables.
+hdcor <- round(cor(heartdiseases1),2)
+hdcor
+```
+
+```{r}
+#Melt the correlation matrix
+library(reshape2)
+melted_hdcor <- melt(hdcor)
+head(melted_hdcor)
+```
+
+```{r}
+#heatmap
+library(ggplot2)
+get_upper_tri <- function(hdcor){
+  hdcor[lower.tri(hdcor)] <- NA
+  return(hdcor)
+}
+
+upper_tri <- get_upper_tri(hdcor)
+upper_tri
+```
+
+
+```{r}                                                                                          
+melted_hdcor <- melt(upper_tri, na.rm = TRUE)
+
+hdheatmap <- ggplot(data =  melted_hdcor, aes (Var2, Var1, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white",
+                       midpoint = 0, limit = c(-1,1), space = "Lab",
+                       name = "Correlation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1,
+        size = 12, hjust = 1)) +
+  coord_fixed()
+
+hdheatmap + 
+  geom_text (aes(Var2, Var1, label = value), color ="Black", size = 4) +
+  theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                title.position = "top", title.hjust = 0.5))
+  
+```
+#Chi-Square Test for categorical values 
+A chi-square test is used when you want to see if there is a relationship between two categorical variables. 
+
+H0: There is no statistically significant relationship between independent variables and heart disease. 
+H1: There is statistically significant relationship between independent variables and heart disease. 
+
+We should reject H0 when P-value less than significance level 0.05. 
+
+```{r}
+#Sex
+hdsex = table(heartdiseases$target, heartdiseases$sex)
+chisq.test(hdsex)
+#There is statistically significant relationship between sex and heart disease.
+```
+
+```{r}
+#Chest Pain Type 
+hdchest_pain_type = table(heartdiseases$target, heartdiseases$chest_pain_type)
+chisq.test(hdchest_pain_type)
+#There is statistically significant relationship between chest pain type and heart disease.
+```
+
+```{r}
+#Fasting Blood Sugar
+hdfasting_blood_sugar = table(heartdiseases$target, heartdiseases$fasting_blood_sugar)
+chisq.test(hdfasting_blood_sugar)
+#There is no statistically significant relationship between fasting blood sugar and heart disease.
+```
+
+```{r}
+#Resting Electrocardiographic Measurement
+hdrest_ecg = table(heartdiseases$target, heartdiseases$rest_ecg)
+chisq.test(hdrest_ecg)
+#There is statistically significant relationship between Resting Electrocardiographic Measurement and heart disease.
+```
+
+```{r}
+#Excises induced angina
+hdexcises_induced_angina = table(heartdiseases$target, heartdiseases$exercise_induced_angina)
+chisq.test(hdexcises_induced_angina)
+#There is statistically significant relationship between Excises induced angina and heart disease.
+```
+
+```{r}
+#Thalassemia
+hdthalassemia = table(heartdiseases$target, heartdiseases$thalassemia)
+chisq.test(hdthalassemia)
+#There is statistically significant relationship between fasting blood sugar and heart disease
+```
+
+#Logistic Regression Analysis 
+```{r}
+heartdiseases$target <- as.factor(heartdiseases$target)
+str(heartdiseases)
+```
+
+```{r}
+#split the data to train set and test set 
+library(caTools)
+split <- sample.split(heartdiseases, SplitRatio = 0.8)
+split
+train <- subset(heartdiseases, split == "TRUE")
+test <- subset(heartdiseases, split == "FALSE")
+```
+
+```{r}
+#Regression Model 1 
+model1 <- glm (target ~ age + sex + chest_pain_type + resting_blood_pressure + cholesterol + fasting_blood_sugar + rest_ecg + max_heart_rate_achieved +  exercise_induced_angina + st_depression + num_major_vessels + thalassemia, data = train, family = 'binomial')
+summary(model1)
+```
+Only sex, chest pain type (typical angina), resting blood pressure, max heart rate achieved, exercise induced angina, st_depression, and number of major vessels are statstically significant. Remove other variables. 
+
+
+```{r}
+#Regression Model 2 - update from model 1
+model2 <- glm (target ~ sex + chest_pain_type + resting_blood_pressure + max_heart_rate_achieved + exercise_induced_angina + st_depression + num_major_vessels, data = train, family = 'binomial')
+summary(model2)
+```
+
+Significant variables correlate to heart disease are: sex, chest pain type (typical angina),exercise induced angina, ST depression and max heart rate achieved and number of major vessels. 
+
+```{r}
+#Regression Model 3 - remove resting blood pressure 
+model3 <- glm (target ~ sex + chest_pain_type + max_heart_rate_achieved + exercise_induced_angina + st_depression + num_major_vessels, data = train, family = 'binomial')
+summary(model3)
+
+```
+
+#Regression diagnostic plots
+```{r}
+par(mfrow=c(2,2))
+plot (model3)
+```
+
+#ANOVA Anlaysis 
+H0: All variables have the same correlation to heart disease. 
+H1: At least one variable do not have the same correlation to heart disease. 
+
+Assume significant level at 0.05. 
+
+Reject H0 when p-value is less than 0.05. 
+
+```{r}
+anova(model3, test = "Chisq")
+```
+All p-value are less than significant lever 0.05, we should reject H0. 
+At least one variables do not have the same correlation to heart disease. 
+
+```{r}
+#model only the intercept
+model3_1 <- glm(target ~ 1, data = train, family = "binomial")
+#model with intercept + sex 
+model3_2 <- glm(target ~ sex, data = train, family = "binomial")
+#model with intercept + sex + chest pain type
+model3_3 <- glm(target ~ sex + chest_pain_type, data = train, family = "binomial")
+#model with intercept  + chest pain type + max_heart_rate_achieved
+model3_4 <- glm(target ~ sex + chest_pain_type + max_heart_rate_achieved, data = train, family = "binomial")
+#model with intercept  + chest pain type + resting blood pressure + max_heart_rate_achieved + exercise_induced_angina
+model3_5 <- glm(target ~ sex + chest_pain_type + max_heart_rate_achieved + exercise_induced_angina, data = train, family = "binomial")
+#model with intercept  + chest pain type + resting blood pressure + max_heart_rate_achieved + exercise_induced_angina + st_depression
+model3_6 <- glm(target ~ sex + chest_pain_type + max_heart_rate_achieved + exercise_induced_angina + st_depression, data = train, family = "binomial")
+#model containing all variabels 
+model3_7 <- glm(target ~ sex + chest_pain_type + resting_blood_pressure + max_heart_rate_achieved  + st_depression + num_major_vessels , data = train, family = "binomial")
+```
+
+#ANOVA test between models 
+Given the table above the model containing "site" doesn't provide any significant improvement (compared to NULL model) at the confidence level you mentioned
+
+H0: Two models have the same significant effect while evaluating heart disease.
+H1: Model 2 is significantly better than Model 1 while evaluating heart disease. 
+
+Significant level at 0.05. Reject H0 when P-value is less than 0.05.
+
+```{r}
+anova(model3_1, model3_2, test = "LRT")
+```
+
+```{r}
+anova(model3_2, model3_3, test = "LRT")
+```
+
+```{r}
+anova(model3_3, model3_4, test = "LRT")
+```
+
+```{r}
+anova(model3_4, model3_5, test = "LRT")
+```
+
+```{r}
+anova(model3_5, model3_6, test = "LRT")
+```
+
+```{r}
+anova(model3_6, model3_7, test = "LRT")
+```
+
